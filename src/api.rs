@@ -1,8 +1,8 @@
-
 use std::sync::Mutex;
 
+use crate::os::wifi_handler::{WifiHandler, get_wifi_handler};
+use crate::os;
 use crate::translations::Translations;
-use crate::wifi_handler::{WifiHandler, get_wifi_handler};
 
 use actix_web::{post, web, Scope, Responder};
 use serde::Deserialize;
@@ -36,7 +36,9 @@ pub struct SetLangParams {
 
 #[post("/api/setLang")]
 async fn set_lang(data: web::Data<AppState>, params: web::Query<SetLangParams>) -> impl Responder {
-    *data.lang.lock().unwrap() = params.lang.parse().unwrap();
+    let lang = params.lang.parse().unwrap();
+    os::set_locale(&lang);
+    *data.lang.lock().unwrap() = lang;
 
     "This is the base".to_string()
 }

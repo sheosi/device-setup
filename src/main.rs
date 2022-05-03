@@ -1,7 +1,7 @@
 mod api;
+mod os;
 mod translations;
 mod web_interface;
-mod wifi_handler;
 
 use crate::web_interface::render;
 
