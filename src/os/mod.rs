@@ -10,4 +10,9 @@ pub fn set_locale(locale: &LanguageIdentifier)  {
         .arg("set-locale")
         .arg(format!("LANG={}.UTF-8", locale))
         .status().unwrap();
+    
+    let s = Command::new("/usr/bin/localectl")
+        .arg("set-locale")
+        .arg(format!("LC_TIME={}.UTF-8", locale))
+        .status().unwrap();
 }
