@@ -1,21 +1,25 @@
+
 use std::sync::Mutex;
 
-use actix_web::{post, web, Scope, Responder};
+use crate::translations::Translations;
 use crate::wifi_handler::{WifiHandler, get_wifi_handler};
+
+use actix_web::{post, web, Scope, Responder};
 use serde::Deserialize;
 use unic_langid::{langid, LanguageIdentifier};
 
-
 pub struct AppState {
     pub wifi: Mutex<Box<dyn WifiHandler>>,
-    pub lang: Mutex<LanguageIdentifier>
+    pub lang: Mutex<LanguageIdentifier>,
+    pub translations: Mutex<Translations>
 }
 
 impl AppState {
     pub fn new() -> Self {
         Self {
             wifi: Mutex::new(get_wifi_handler()),
-            lang: Mutex::new(langid!("en-US"))
+            lang: Mutex::new(langid!("en-US")),
+            translations: Mutex::new(Translations::new())
         }
     }
 }
