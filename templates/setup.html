@@ -29,24 +29,24 @@
     <body>
         <form id="setupForm" action="/api/do-setup" method="post">
             <div class="step">
-                <h1> Select Language </h1>
+                <h1> {{ select_lang_title }} </h1>
                 <select id="lang_select" name="lang">
                 </select> 
             </div class="step">
 
             <div class="step">
-                <h1>Wifi</h1>
-                <h2>Network name</h2>
+                <h1>Wi-fi</h1>
+                <h2>{{ network_name }}</h2>
                 <input name="ssid" id="ssid" type="text" required/>
-                <h2>Password</h2>
+                <h2>{{ password }}</h2>
                 <input name="password" id="password" type="text" required/>
                 <br/>
             </div>
 
             <div style="overflow:auto;">
                 <div style="float:right;">
-                    <button type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
-                    <button type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
+                    <button type="button" id="prevBtn" onclick="nextPrev(-1)"> {{ previous_btn }}</button>
+                    <button type="button" id="nextBtn" onclick="nextPrev(1)"> {{ next_btn }}</button>
                 </div>
             </div>
 
@@ -99,10 +99,10 @@
                 }
 
                 if (n == (x.length - 1 )) {
-                    document.getElementById("nextBtn").innerHTML = "Submit";
+                    document.getElementById("nextBtn").innerHTML = "{{ finish_btn }}";
                 }
                 else {
-                    document.getElementById("nextBtn").innerHTML = "Next";
+                    document.getElementById("nextBtn").innerHTML = "{{ next_btn }}";
                 }
 
                 fixStepIndicator(n)
