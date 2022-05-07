@@ -8,13 +8,13 @@ use dbus::{arg::{Variant, self, PropMap, RefArg}, nonblock::Proxy};
 use dbus_tokio::connection;
 
 #[derive(Debug, Error)]
-pub enum WifiError {
+pub enum Error {
 
 }
 
 #[async_trait]
-pub trait WifiHandler {
-    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError>;
+pub trait Handler {
+    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), Error>;
 }
 
 pub struct NetworkManagerWifi {
@@ -69,8 +69,8 @@ impl NetworkManagerWifi {
 }
 
 #[async_trait]
-impl WifiHandler for NetworkManagerWifi {
-    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError> {
+impl Handler for NetworkManagerWifi {
+    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), Error> {
         let (resource, dbus) = connection::new_system_sync().unwrap();
         let a = async move {
             let proxy = Proxy::new("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings", Duration::from_millis(5000), dbus);
@@ -88,6 +88,6 @@ impl WifiHandler for NetworkManagerWifi {
     }
 }
 
-pub fn get_wifi_handler() -> Box<dyn WifiHandler> {
+pub fn get_handler() -> Box<dyn Handler> {
     Box::new(NetworkManagerWifi::new())
 }
