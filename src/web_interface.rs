@@ -1,15 +1,5 @@
+use crate::translations::{LangData, LANGS};
 use serde::Serialize;
-
-#[derive(Clone, Serialize)]
-pub struct LangData {
-    value: &'static str,
-    name: &'static str
-}
-
-const LANGS: [LangData; 2] = [
-    LangData{value: "es-ES", name: "Español (España)"}, 
-    LangData{value: "en-US", name: "English (United States)"}
-];
 
 #[derive(Serialize)]
 pub struct AllLangs {

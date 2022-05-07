@@ -2,6 +2,23 @@ use std::collections::HashMap;
 
 use fluent::{FluentArgs, FluentBundle, FluentResource};
 use unic_langid::{langid, LanguageIdentifier};
+use serde::Serialize;
+
+pub const DEF_LANG: LanguageIdentifier = langid!("en-US");
+
+pub const LANGS: [LangData; 2] = [
+    LangData{value: "es-ES", name: "Español (España)", ftl: include_str!("../i18n/en-US.ftl")}, 
+    LangData{value: "en-US", name: "English (United States)", ftl: include_str!("../i18n/es-ES.ftl")}
+];
+
+#[derive(Clone, Serialize)]
+pub struct LangData {
+    pub value: &'static str,
+    pub name: &'static str,
+    #[serde(skip_serializing)]
+    pub ftl: &'static str
+}
+
 
 enum TranslationState {
     Raw(&'static str),
@@ -55,16 +72,16 @@ impl Translations {
         let mut result = HashMap::new();
 
         // Insert langs
-        result.insert(langid!("en-US"), TranslationState::Raw(include_str!("../i18n/en-US.ftl")));
-        result.insert(langid!("es-ES"), TranslationState::Raw(include_str!("../i18n/es-ES.ftl")));
+        for l in LANGS {
+            result.insert(l.value.parse().unwrap(), TranslationState::Raw(l.ftl));
+        }
 
         // Compile current lang
         if let Some(l) = result.get_mut(current) {
             l.compile(current);
         }
         else {
-            let en_US = langid!("en-US");
-            result.get_mut(&en_US).unwrap().compile(&en_US);
+            result.get_mut(&DEF_LANG).unwrap().compile(&DEF_LANG);
         }
     
         Self {inner: result}

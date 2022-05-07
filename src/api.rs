@@ -1,11 +1,11 @@
 use std::sync::Mutex;
 
-use crate::translations::Translations;
-use crate::os::wifi_handler::{get_wifi_handler, WifiHandler};
+use crate::translations::{Translations, DEF_LANG};
+use crate::os::{self, wifi_handler::{get_wifi_handler, WifiHandler}};
 
 use actix_web::{post, web, Scope, Responder};
 use serde::Deserialize;
-use unic_langid::{langid, LanguageIdentifier};
+use unic_langid::LanguageIdentifier;
 
 pub struct AppState {
     pub wifi: Mutex<Box<dyn WifiHandler>>,
@@ -15,10 +15,11 @@ pub struct AppState {
 
 impl AppState {
     pub fn new() -> Self {
+        let curr_lang = os::locale::current().unwrap_or(DEF_LANG);
         Self {
             wifi: Mutex::new(get_wifi_handler()),
-            lang: Mutex::new(langid!("en-US")),
-            translations: Mutex::new(Translations::new(&langid!("en-US")))
+            translations: Mutex::new(Translations::new(&curr_lang)),
+            lang: Mutex::new(curr_lang)
         }
     }
 }
@@ -67,7 +68,7 @@ mod api_impl {
 
     pub fn set_lang(data: web::Data<AppState>, params: &SetLangParams) -> Result<(),()> {
         let lang = params.lang.parse().unwrap();
-        os::set_locale(&lang)?;
+        os::locale::set(&lang)?;
         *data.lang.lock().unwrap() = lang;
 
         Ok(())
