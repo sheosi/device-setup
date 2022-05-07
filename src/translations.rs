@@ -28,17 +28,15 @@ enum TranslationState {
 impl TranslationState {
     pub fn compile(&mut self, lang_id: &LanguageIdentifier)  {
         if let Self::Raw(str) = self {
-            let res = FluentResource::try_new(str.to_string()).unwrap();
+            let res = FluentResource::try_new(str.to_string()).expect("Failed to parse FTL");
             let mut bundle = FluentBundle::new(vec![lang_id.clone()]);
-            bundle.add_resource(res).unwrap();
+            bundle.add_resource(res).expect("Failed to add FTL resource");
 
             *self = Self::Compiled(Translator{inner: bundle})
         }
     }
 
     pub fn get(&mut self, lang_id: &LanguageIdentifier) -> &Translator {
-        println!("{:?}", lang_id);
-
         self.compile(lang_id); // Changes itself to Translation::Compiled
 
         if let Self::Compiled(translator) = self {
@@ -56,7 +54,10 @@ pub struct Translator {
 
 impl Translator {
     pub fn translate(&self, resource: &str, args: Option<&FluentArgs>) -> String {
-        let val = self.inner.get_message(resource).unwrap().value().unwrap();
+        let val = self.inner
+            .get_message(resource).expect("Resource does not exist")
+            .value().expect("Has no value");
+            
         let mut errors = vec![];
         self.inner.format_pattern(val, args, &mut errors).to_string()
     }
@@ -73,7 +74,7 @@ impl Translations {
 
         // Insert langs
         for l in LANGS {
-            result.insert(l.value.parse().unwrap(), TranslationState::Raw(l.ftl));
+            result.insert(l.value.parse().expect("Used an invalid identifier"), TranslationState::Raw(l.ftl));
         }
 
         // Compile current lang
@@ -81,13 +82,18 @@ impl Translations {
             l.compile(current);
         }
         else {
-            result.get_mut(&DEF_LANG).unwrap().compile(&DEF_LANG);
+            result.get_mut(&DEF_LANG).expect("Report this").compile(&DEF_LANG);
         }
     
         Self {inner: result}
     }
 
-    pub fn get(&mut self, lang: &LanguageIdentifier) -> &Translator {
-        self.inner.get_mut(lang).unwrap().get(lang)
+    pub fn get_or_def(&mut self, lang: &LanguageIdentifier, def: &LanguageIdentifier) -> &Translator {
+        if self.inner.contains_key(lang) {
+            self.inner.get_mut(lang).map(|t|t.get(lang)).expect("Report this")
+        }
+        else {
+            self.inner.get_mut(def).map(|t|t.get(def)).expect("Report this")
+        }
     }
 }

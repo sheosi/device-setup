@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
+use actix_web::{body, HttpResponse};
 use async_trait::async_trait;
 use futures::{select, FutureExt};
 use thiserror::Error;
@@ -9,7 +10,17 @@ use dbus_tokio::connection;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Failed to connect or perform some operation on the system bus: {0}")]
+    SystemBus(#[from] dbus::Error),
 
+    #[error("Connection to the system bus has been aborted")]
+    BusConnectionAborted,
+}
+
+impl actix_web::ResponseError for Error {
+    fn error_response(&self) -> HttpResponse<body::BoxBody> {
+        actix_web::HttpResponse::ServiceUnavailable().body(self.to_string())
+    }
 }
 
 #[async_trait]
@@ -71,19 +82,20 @@ impl NetworkManagerWifi {
 #[async_trait]
 impl Handler for NetworkManagerWifi {
     async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), Error> {
-        let (resource, dbus) = connection::new_system_sync().unwrap();
-        let a = async move {
+        let (resource, dbus) = connection::new_system_sync()?;
+
+        let send = async move {
             let proxy = Proxy::new("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings", Duration::from_millis(5000), dbus);
 
             let connection = Self::prepare_connection_object(ssid, password);
             let _path = proxy.method_call("org.freedesktop.NetworkManager.Settings", "AddConnection", (connection, ))
-                .await.map(|r: (dbus::Path<'static>, )| r.0).unwrap();
-
+                .await.map(|r: (dbus::Path<'static>, )| r.0)?;
+            Ok::<(), Error>(())
         };
 
         select! {
-            _ = resource.fuse() => Ok(()),
-            _ = a.fuse() => Ok(()),
+            _ = resource.fuse() => Err(Error::BusConnectionAborted),
+            r = send.fuse() => r,
         }
     }
 }

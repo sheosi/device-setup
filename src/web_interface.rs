@@ -35,6 +35,6 @@ pub mod render {
             next_btn: trans.translate("next_btn", None),
             finish_btn: trans.translate("finish_btn", None),
             langs: AllLangs { all: super::LANGS.to_vec(), current:  curr_lang.to_string()}
-        }.render().unwrap()
+        }.render().expect("Formatting failed, report this")
     }
 }
