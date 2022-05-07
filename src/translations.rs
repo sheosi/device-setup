@@ -7,8 +7,8 @@ use serde::Serialize;
 pub const DEF_LANG: LanguageIdentifier = langid!("en-US");
 
 pub const LANGS: [LangData; 2] = [
-    LangData{value: "es-ES", name: "Español (España)", ftl: include_str!("../i18n/en-US.ftl")}, 
-    LangData{value: "en-US", name: "English (United States)", ftl: include_str!("../i18n/es-ES.ftl")}
+    LangData{value: "es-ES", name: "Español (España)", ftl: include_str!("../i18n/es-ES.ftl")}, 
+    LangData{value: "en-US", name: "English (United States)", ftl: include_str!("../i18n/en-US.ftl")}
 ];
 
 #[derive(Clone, Serialize)]
