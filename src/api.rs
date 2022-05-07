@@ -14,6 +14,7 @@ pub struct AppState {
     pub translations: Mutex<Translations>
 }
 
+#[allow(clippy::new_without_default)]
 impl AppState {
     pub fn new() -> Self {
         let curr_lang = os::locale::current().unwrap_or(DEF_LANG);
