@@ -9,12 +9,6 @@ enum TranslationState {
 }
 
 impl TranslationState {
-    pub fn compiled(lang_id: &LanguageIdentifier, str: &'static str) -> Self {
-        let mut trans = Self::Raw(str);
-        trans.compile(lang_id);
-
-        trans
-    }
     pub fn compile(&mut self, lang_id: &LanguageIdentifier)  {
         if let Self::Raw(str) = self {
             let res = FluentResource::try_new(str.to_string()).unwrap();
@@ -26,6 +20,7 @@ impl TranslationState {
     }
 
     pub fn get(&mut self, lang_id: &LanguageIdentifier) -> &Translator {
+        println!("{:?}", lang_id);
 
         self.compile(lang_id); // Changes itself to Translation::Compiled
 
@@ -33,7 +28,7 @@ impl TranslationState {
             translator
         }
         else {
-            panic!("We just compiled, jet it's not available as compiled, report this");
+            panic!("We just compiled, yet it's not available as compiled, report this");
         }
     }
 }
@@ -56,16 +51,21 @@ pub struct Translations {
 }
 
 impl Translations {
-    pub fn new() -> Self {
+    pub fn new(current: &LanguageIdentifier) -> Self {
         let mut result = HashMap::new();
 
-        // Default lang
-        let en_us = langid!("en-US");
-
-        result.insert(en_us.clone(), TranslationState::compiled(&en_us, include_str!("../i18n/es-ES.ftl")));
-    
-        // Rest of langs
+        // Insert langs
+        result.insert(langid!("en-US"), TranslationState::Raw(include_str!("../i18n/en-US.ftl")));
         result.insert(langid!("es-ES"), TranslationState::Raw(include_str!("../i18n/es-ES.ftl")));
+
+        // Compile current lang
+        if let Some(l) = result.get_mut(current) {
+            l.compile(current);
+        }
+        else {
+            let en_US = langid!("en-US");
+            result.get_mut(&en_US).unwrap().compile(&en_US);
+        }
     
         Self {inner: result}
     }

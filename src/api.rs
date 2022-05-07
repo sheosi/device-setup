@@ -18,7 +18,7 @@ impl AppState {
         Self {
             wifi: Mutex::new(get_wifi_handler()),
             lang: Mutex::new(langid!("en-US")),
-            translations: Mutex::new(Translations::new())
+            translations: Mutex::new(Translations::new(&langid!("en-US")))
         }
     }
 }
@@ -55,7 +55,7 @@ async fn do_setup(data: web::Data<AppState>, params: web::Form<DoSetupParams>) -
 mod api_impl {
     
     use super::AppState;
-    use crate::os;
+    use crate::os::{self, wifi_handler::WifiError};
 
     use serde::Deserialize;
     use actix_web::web;
@@ -67,7 +67,7 @@ mod api_impl {
 
     pub fn set_lang(data: web::Data<AppState>, params: &SetLangParams) -> Result<(),()> {
         let lang = params.lang.parse().unwrap();
-        os::set_locale(&lang);
+        os::set_locale(&lang)?;
         *data.lang.lock().unwrap() = lang;
 
         Ok(())
@@ -79,9 +79,7 @@ mod api_impl {
         password: String
     }
 
-    pub async fn connect_wifi(data: web::Data<AppState>, params: &ConnectParams) -> Result<(), ()> {
-        let a = data.wifi.lock().unwrap().connect_to(&params.ssid, &params.password);
-        
-        Ok(())
+    pub async fn connect_wifi(data: web::Data<AppState>, params: &ConnectParams) -> Result<(), WifiError> {
+        data.wifi.lock().unwrap().connect_to(&params.ssid, &params.password).await
     }
 }

@@ -1,16 +1,20 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
+use async_trait::async_trait;
+use futures::{select, FutureExt};
 use thiserror::Error;
-use dbus::{blocking::Connection, arg::{Variant, self, PropMap, RefArg}};
+use dbus::{arg::{Variant, self, PropMap, RefArg}, nonblock::Proxy};
+use dbus_tokio::connection;
 
 #[derive(Debug, Error)]
 pub enum WifiError {
 
 }
 
+#[async_trait]
 pub trait WifiHandler {
-    fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError>;
+    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError>;
 }
 
 pub struct NetworkManagerWifi {
@@ -62,21 +66,25 @@ impl NetworkManagerWifi {
         res
     }
     
-        /*let dbus_connection = Connection::new_system()?;
-        let nm = NetworkManager::new(&dbus_connection);*/
-    
 }
 
+#[async_trait]
 impl WifiHandler for NetworkManagerWifi {
-    fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError> {
-        let dbus = Connection::new_system().unwrap();
-        let proxy = dbus.with_proxy("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings", Duration::from_millis(5000));
-        
-        let connection = Self::prepare_connection_object(ssid, password);
-        let path_ = proxy.method_call("org.freedesktop.NetworkManager.Settings", "AddConnection", (connection, ))
-        .map(|r: (dbus::Path<'static>, )| r.0).unwrap();
+    async fn connect_to(&mut self, ssid: &str, password: &str) -> Result<(), WifiError> {
+        let (resource, dbus) = connection::new_system_sync().unwrap();
+        let a = async move {
+            let proxy = Proxy::new("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager/Settings", Duration::from_millis(5000), dbus);
 
-        Ok(())
+            let connection = Self::prepare_connection_object(ssid, password);
+            let _path = proxy.method_call("org.freedesktop.NetworkManager.Settings", "AddConnection", (connection, ))
+                .await.map(|r: (dbus::Path<'static>, )| r.0).unwrap();
+
+        };
+
+        select! {
+            _ = resource.fuse() => Ok(()),
+            _ = a.fuse() => Ok(()),
+        }
     }
 }
 
