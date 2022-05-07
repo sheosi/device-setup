@@ -16,7 +16,7 @@ async fn web_interface_fn( data: web::Data<api::AppState>) -> impl Responder {
 
     HttpResponse::Ok()
     .content_type(ContentType::html())
-    .body(render::setup_form(translator))
+    .body(render::setup_form(translator, &data.lang.lock().unwrap()))
 }
 
 #[actix_web::main] // or #[tokio::main]

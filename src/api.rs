@@ -3,26 +3,9 @@ use std::sync::Mutex;
 use crate::translations::Translations;
 use crate::os::wifi_handler::{get_wifi_handler, WifiHandler};
 
-use actix_web::{post, web, Scope, Responder, get};
-use serde::{Deserialize, Serialize};
+use actix_web::{post, web, Scope, Responder};
+use serde::Deserialize;
 use unic_langid::{langid, LanguageIdentifier};
-
-#[derive(Clone, Serialize)]
-pub struct LangData {
-    value: &'static str,
-    name: &'static str
-}
-
-const LANGS: [LangData; 2] = [
-    LangData{value: "es-ES", name: "Español (España)"}, 
-    LangData{value: "en-US", name: "English (United States)"}
-];
-
-#[derive(Serialize)]
-pub struct AllLangs {
-    all: Vec<LangData>,
-    current: String
-}
 
 pub struct AppState {
     pub wifi: Mutex<Box<dyn WifiHandler>>,
@@ -42,7 +25,6 @@ impl AppState {
 
 pub fn scope() -> Scope {
     web::scope("/api")
-        .service(get_langs)
         .service(set_lang)
         .service(do_setup)
 }
@@ -52,11 +34,6 @@ pub fn scope() -> Scope {
 async fn set_lang(data: web::Data<AppState>, params: web::Query<api_impl::SetLangParams>) -> impl Responder {
     api_impl::set_lang(data, &params).unwrap();
     "Ok"
-}
-
-#[get("/lang/all")]
-async fn get_langs(data: web::Data<AppState>) -> impl Responder {
-    web::Json(AllLangs{ all: LANGS.to_vec(), current: data.lang.lock().unwrap().to_string()})
 }
 
 #[derive(Deserialize)]

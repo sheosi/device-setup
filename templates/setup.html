@@ -31,6 +31,9 @@
             <div class="step">
                 <h1> {{ select_lang_title }} </h1>
                 <select id="lang_select" name="lang">
+                    {% for lang in langs.all %}
+                        <option value="{{ lang.value }}" {% if lang.value == langs.current %} selected {% endif %}>{{ lang.name }}</option>
+                    {% endfor %}
                 </select> 
             </div class="step">
 
@@ -43,14 +46,18 @@
                 <br/>
             </div>
 
-            <div style="overflow:auto;">
+            <div id="wait" style="display:none">
+                <h1> Please wait...</h1>
+            </div>
+            
+            <div id="buttons" style="overflow:auto;">
                 <div style="float:right;">
                     <button type="button" id="prevBtn" onclick="nextPrev(-1)"> {{ previous_btn }}</button>
                     <button type="button" id="nextBtn" onclick="nextPrev(1)"> {{ next_btn }}</button>
                 </div>
             </div>
 
-            <div style="text-align:center;margin-top:40px;">
+            <div id="indicators" style="text-align:center;margin-top:40px;">
                 <span class="indicator"></span>
                 <span class="indicator"></span>
             </div>
@@ -61,20 +68,6 @@
             showTab(currentTab);
 
             let langSelect = document.getElementById("lang_select");
-
-            getJSONP('/api/lang/all', function(err, langArray) {                
-                for (element in langArray["all"]) {
-                    var opt = document.createElement("option");
-                    opt.value = langArray["all"][element]["value"];
-                    opt.innerHTML = langArray["all"][element]["name"]; // whatever property it has
-
-                    // then append it to the select element
-                    langSelect.appendChild(opt);
-                }
-
-                langSelect.value = langArray["current"]
-
-            });
 
             function refresh() {
                 var xhr = new XMLHttpRequest();
@@ -90,22 +83,29 @@
             
             function showTab(n) {
                 var x = document.getElementsByClassName("step");
-                x[n].style.display = "block";
-                if (n == 0) {
-                    document.getElementById("prevBtn").style.display = "none";
+                if (n < x.length ) {
+                    x[n].style.display = "block";
+                    if (n == 0) {
+                        document.getElementById("prevBtn").style.display = "none";
+                    }
+                    else {
+                        document.getElementById("prevBtn").style.display = "inline";
+                    }
+
+                    if (n == (x.length - 1 )) {
+                        document.getElementById("nextBtn").innerHTML = "{{ finish_btn }}";
+                    }
+                    else {
+                        document.getElementById("nextBtn").innerHTML = "{{ next_btn }}";
+                    }
+
+                    fixStepIndicator(n)
                 }
                 else {
-                    document.getElementById("prevBtn").style.display = "inline";
+                    document.getElementById("indicators").style.display = "none";
+                    document.getElementById("buttons").style.display = "none";
+                    document.getElementById("wait").style.display = "inline";
                 }
-
-                if (n == (x.length - 1 )) {
-                    document.getElementById("nextBtn").innerHTML = "{{ finish_btn }}";
-                }
-                else {
-                    document.getElementById("nextBtn").innerHTML = "{{ next_btn }}";
-                }
-
-                fixStepIndicator(n)
             }
 
             function nextPrev(n) {
@@ -114,12 +114,15 @@
 
                 x[currentTab].style.display = "none";
                 currentTab = currentTab + n;
+
+                showTab(currentTab);
+
                 if (currentTab >= x.length) {
                     document.getElementById("setupForm").submit();
                     return false;
                 }
 
-                showTab(currentTab);
+                
             }
 
             function validateForm() {
