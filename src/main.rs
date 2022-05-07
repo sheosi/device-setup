@@ -5,31 +5,18 @@ mod web_interface;
 
 use crate::web_interface::render;
 
-use actix_web::{get, web, App, HttpServer, Responder};
-use serde::Deserialize;
+use actix_web::{get, web, App, HttpServer, Responder, HttpResponse, http::header::ContentType};
 
-
-#[derive(Deserialize)]
-struct WebInterfaceParams {
-    step: WebInterfaceStep,
-}
-
-#[derive(Deserialize)]
-enum WebInterfaceStep {
-    LanguageSelect,
-    WifiConnect
-}
 
 #[get("/")]
-async fn web_interface_fn(state: web::Query<WebInterfaceParams>, data: web::Data<api::AppState>) -> impl Responder {
+async fn web_interface_fn( data: web::Data<api::AppState>) -> impl Responder {
     
     let mut t = data.translations.lock().unwrap();
     let translator = t.get(&data.lang.lock().unwrap());
 
-    match state.step {
-        WebInterfaceStep::LanguageSelect => render::language_select(translator),
-        WebInterfaceStep::WifiConnect => render::wifi_connect(translator)
-    }
+    HttpResponse::Ok()
+    .content_type(ContentType::html())
+    .body(render::setup_form(translator))
 }
 
 #[actix_web::main] // or #[tokio::main]

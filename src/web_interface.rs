@@ -4,25 +4,15 @@ pub mod render {
 
     use crate::translations::Translator;
 
-    pub fn language_select(trans: &Translator) -> String {
+    pub fn setup_form(trans: &Translator) -> String {
 
         #[derive(Template)]
-        #[template(path = "language_select.html")]
-        struct LangSelect {
+        #[template(path = "setup.html")]
+        struct SetupForm {
 
         }
 
         //let a = trans.translate( "miau", None);
-        LangSelect {}.render().unwrap()
-    }
-
-    pub fn wifi_connect(trans: &Translator) -> String {
-        #[derive(Template)]
-        #[template(path = "wifi_conf.html")]
-        struct WifiConf {
-
-        }
-
-        WifiConf {}.render().unwrap()
+        SetupForm {}.render().unwrap()
     }
 }

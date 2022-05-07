@@ -3,8 +3,6 @@ pub mod wifi_handler;
 use std::process::Command;
 use unic_langid::LanguageIdentifier;
 
-
-
 pub fn set_locale(locale: &LanguageIdentifier)  {
     let s = Command::new("/usr/bin/localectl")
         .arg("set-locale")
