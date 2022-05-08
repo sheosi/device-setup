@@ -137,14 +137,14 @@
                 }
 
                 if (valid) {
-                    document.getElementsByClassName("step")[currentTab].className += " finish";
+                    document.getElementsByClassName("indicator")[currentTab].className += " finish";
                 }
 
                 return valid;
             }
 
             function fixStepIndicator(n) {
-                var i, x = document.getElementsByClassName("step");
+                var i, x = document.getElementsByClassName("indicator");
                 for (i = 0; i < x.length; i++) {
                     x[i].className = x[i].className.replace(" active", "");
                 }
