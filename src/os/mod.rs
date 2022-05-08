@@ -19,7 +19,7 @@ pub mod locale {
         Localectl(#[from] std::io::Error),
 
         #[error("Locale set error: {0}")]
-        SetError(String),
+        Set(String),
 
         #[error("Failed to parse locale: {0}")]
         ParseLocale(#[from] unic_langid::LanguageIdentifierError),
@@ -52,7 +52,7 @@ pub mod locale {
             .output()?;
 
         if !s.status.success() {
-            return Err(Error::SetError(std::str::from_utf8(&s.stdout).unwrap_or("ERROR: CONTAINS NON-UNICODE, REPORT THIS").to_string()));
+            return Err(Error::Set(std::str::from_utf8(&s.stdout).unwrap_or("ERROR: CONTAINS NON-UNICODE, REPORT THIS").to_string()));
         }
         
         Ok(())
@@ -62,8 +62,8 @@ pub mod locale {
         let o = Command::new("/usr/bin/localectl").output()?;
         let locale_out = std::str::from_utf8(&o.stdout).map_err(|_| Error::IsNotUtf8)?;
 
-        const LANG_START: &str = "System Locale: LANG=";
-        if locale_out.starts_with("System Locale: LANG=") {
+        const LANG_START: &str = "   System Locale: LANG=";
+        if locale_out.starts_with(LANG_START) {
             let pos = locale_out.find('.').unwrap_or_else(||locale_out.find('\n').unwrap_or(locale_out.len()));
             let l = locale_out[LANG_START.len()..pos].parse().expect("Shoudln't happen, report this");
             Ok(l)
