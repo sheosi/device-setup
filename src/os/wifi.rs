@@ -46,11 +46,10 @@ impl NetworkManagerWifi {
             Variant(Box::new(str.to_string().into_bytes()))
         }
 
-
         let mut con = PropMap::new();        
         con.insert("type".into(), variant_str("802-11-wireless"));
         con.insert("uuid".into(), variant_str(&uuid::Uuid::new_v4().to_string()));
-        con.insert("id".into(), variant_str("My-WPA_PSK"));
+        con.insert("id".into(), variant_str(ssid));
 
         let mut wifi = PropMap::new();
         wifi.insert("ssid".into(), variant_str_bytes(ssid));
