@@ -39,17 +39,17 @@ impl NetworkManagerWifi {
     
     pub fn prepare_connection_object<'a>(ssid: &'a str, password: &'a str) -> HashMap<&'static str, arg::PropMap> {
         fn variant_str(str: &str) -> Variant<Box<dyn RefArg>> {
-            Variant(Box::new(Variant(str.to_string())))
+            Variant(Box::new(str.to_string()))
         }
 
         fn variant_str_bytes(str: &str) -> Variant<Box<dyn RefArg>> {
-            Variant(Box::new(Variant(str.to_string().into_bytes())))
+            Variant(Box::new(str.to_string().into_bytes()))
         }
 
 
         let mut con = PropMap::new();        
         con.insert("type".into(), variant_str("802-11-wireless"));
-        con.insert("uuid".into(), variant_str(""));
+        con.insert("uuid".into(), variant_str(&uuid::Uuid::new_v4().to_string()));
         con.insert("id".into(), variant_str("My-WPA_PSK"));
 
         let mut wifi = PropMap::new();
