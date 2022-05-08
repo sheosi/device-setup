@@ -29,7 +29,12 @@ auth_algs=1\
 ignore_broadcast_ssid=0" | sudo tee /etc/hostapd/hostapd.conf
 
 cargo build --release
+sudo cp target/release/device-setup /usr/local/bin/device-setup
+sudo cp target/release/device-setup-detector /usr/local/bin/device-setup-detector
 
 sudo cp distribution/device-setup.service /etc/systemd/system/
+sudo cp distribution/device-setup-detector.service /etc/systemd/system/
+sudo systemctl enable device-setup-detector.service
+sudo systemctl start device-setup-detector.service
 
-echo "Now you can do: sudo systemctl start device-setup"
+echo "device-setup and it's detector are now installed"

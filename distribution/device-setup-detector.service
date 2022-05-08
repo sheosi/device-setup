@@ -1,0 +1,8 @@
+[Unit]
+Description=Detects whether the device has no internet connectivity and starts device-setup
+
+[Service]
+ExecStart=/usr/local/bin/device-setup-detector
+
+[Install]
+WantedBy=network.target

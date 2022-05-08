@@ -2,7 +2,7 @@
 Description=First time device configuration
 
 [Service]
-ExecStart=/usr/bin/device-setup
+ExecStart=/usr/local/bin/device-setup
 
 [Install]
 WantedBy=network.target
