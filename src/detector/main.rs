@@ -1,52 +1,46 @@
 use std::process::Command;
+use std::time::Duration;
 
-use dbus::blocking::Connection;
-use networkmanager::devices::{Any, Device, Wireless};
-use networkmanager::NetworkManager;
+use dbus::Message;
+use dbus::blocking::{stdintf::org_freedesktop_dbus::PropertiesPropertiesChanged, Connection};
 
-fn has_connection(nm: &NetworkManager) -> bool {
-    for dev in nm.get_devices().unwrap() {
-        match dev {
-            Device::Ethernet(x) => {
-                if x.active_connection().is_ok() {
-                    return true;
-                }
+fn start_device_setup_systemd() {
+    match Command::new("/usr/bin/systemctl").arg("start").arg("device-setup.service").output() {
+        Ok(output) => {
+            if !output.status.success() {
+                eprintln!("'systemctl' returned a failure code {}: {}", output.status, std::str::from_utf8(&output.stdout).unwrap_or("ERROR: NOT UTF-8"));
             }
-            Device::WiFi(x) => {
-                if x.active_connection().is_ok() || x.active_access_point().is_ok() {
-                    return true;
-                }
-                
-            }
-            _ => {}
         }
-    }
+        Err(e) => {
+            eprintln!("Failed to execute 'systemctl': {}", e);
+        }
 
-    false
+    }
+}
+
+fn watch_network_nm() {
+    let dbus_connection = Connection::new_system().unwrap();
+    let p = dbus_connection.with_proxy("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager", Duration::from_secs(5));
+    let _id = p.match_signal(|c: PropertiesPropertiesChanged, _: &Connection, _: &Message|{
+        if let Some(cons) = c.changed_properties.get("ActiveConnections") {
+            
+            // Access the connections as iter and try to get the first one
+            // this way we know whether there's one
+            if cons.0.as_iter().unwrap().next().is_none() {
+                start_device_setup_systemd();
+            }
+        }
+
+        // We want to keep the match
+        true
+    }).unwrap();    
+
+    loop {
+        dbus_connection.process(Duration::from_secs(std::u16::MAX.into())).unwrap();
+    }
 }
 
 
 fn main() {
-    let dbus_connection = Connection::new_system().unwrap();
-
-    let nm = NetworkManager::new(&dbus_connection);
-
-    loop {
-        if !has_connection(&nm) {
-            
-            match Command::new("/usr/bin/systemctl").arg("start").arg("device-setup.service").output() {
-                Ok(output) => {
-                    if !output.status.success() {
-                        eprintln!("'systemctl' returned a failure code {}: {}", output.status, std::str::from_utf8(&output.stdout).unwrap_or("ERROR: NOT UTF-8"));
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to execute 'systemctl': {}", e);
-                }
-
-            }
-        }
-
-        std::thread::sleep(std::time::Duration::from_secs(180));
-    }
+    watch_network_nm();
 }
