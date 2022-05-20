@@ -7,8 +7,8 @@ use serde::Serialize;
 pub const DEF_LANG: LanguageIdentifier = langid!("en-US");
 
 pub const LANGS: [LangData; 2] = [
-    LangData{value: "es-ES", name: "Español (España)", ftl: include_str!("../i18n/es-ES.ftl")}, 
-    LangData{value: "en-US", name: "English (United States)", ftl: include_str!("../i18n/en-US.ftl")}
+    LangData{value: "es-ES", name: "Español (España)", path: "i18n/es-ES.ftl"}, 
+    LangData{value: "en-US", name: "English (United States)", path: "i18n/en-US.ftl"}
 ];
 
 #[derive(Clone, Serialize)]
@@ -16,36 +16,7 @@ pub struct LangData {
     pub value: &'static str,
     pub name: &'static str,
     #[serde(skip_serializing)]
-    pub ftl: &'static str
-}
-
-
-enum TranslationState {
-    Raw(&'static str),
-    Compiled(Translator)
-}
-
-impl TranslationState {
-    pub fn compile(&mut self, lang_id: &LanguageIdentifier)  {
-        if let Self::Raw(str) = self {
-            let res = FluentResource::try_new(str.to_string()).expect("Failed to parse FTL");
-            let mut bundle = FluentBundle::new(vec![lang_id.clone()]);
-            bundle.add_resource(res).expect("Failed to add FTL resource");
-
-            *self = Self::Compiled(Translator{inner: bundle})
-        }
-    }
-
-    pub fn get(&mut self, lang_id: &LanguageIdentifier) -> &Translator {
-        self.compile(lang_id); // Changes itself to Translation::Compiled
-
-        if let Self::Compiled(translator) = self {
-            translator
-        }
-        else {
-            panic!("We just compiled, yet it's not available as compiled, report this");
-        }
-    }
+    pub path: &'static str
 }
 
 pub struct Translator {
@@ -53,6 +24,15 @@ pub struct Translator {
 }
 
 impl Translator {
+    pub fn load(lang_id: LanguageIdentifier, path: &str) -> Self {
+        let contents = std::fs::read_to_string(path).unwrap();
+        let res = FluentResource::try_new(contents).expect("Failed to parse FTL");
+        let mut bundle = FluentBundle::new(vec![lang_id]);
+        bundle.add_resource(res).expect("Failed to add FTL resource");
+
+        Self {inner: bundle}
+    }
+
     pub fn translate(&self, resource: &str, args: Option<&FluentArgs>) -> String {
         let val = self.inner
             .get_message(resource).expect("Resource does not exist")
@@ -65,35 +45,44 @@ impl Translator {
 
 
 pub struct Translations {
-    inner: HashMap<LanguageIdentifier, TranslationState>
+    inner: HashMap<LanguageIdentifier, String>,
+    current: Translator
 }
 
 impl Translations {
     pub fn new(current: &LanguageIdentifier) -> Self {
-        let mut result = HashMap::new();
+        let mut result:HashMap<_, String> = HashMap::new();
 
         // Insert langs
         for l in LANGS {
-            result.insert(l.value.parse().expect("Used an invalid identifier"), TranslationState::Raw(l.ftl));
+            result.insert(l.value.parse().expect("Used an invalid identifier"), l.path.to_string());
         }
 
         // Compile current lang
-        if let Some(l) = result.get_mut(current) {
-            l.compile(current);
+        let current = if let Some(l) = result.get(current) {
+            Translator::load(current.clone(), l)
         }
         else {
-            result.get_mut(&DEF_LANG).expect("Report this").compile(&DEF_LANG);
-        }
+            Translator::load(DEF_LANG, result.get(&DEF_LANG).expect("Report this"))
+        };
     
-        Self {inner: result}
+        Self {inner: result, current}
     }
 
-    pub fn get_or_def(&mut self, lang: &LanguageIdentifier, def: &LanguageIdentifier) -> &Translator {
-        if self.inner.contains_key(lang) {
-            self.inner.get_mut(lang).map(|t|t.get(lang)).expect("Report this")
+    pub fn set(&mut self, new_lang: &LanguageIdentifier) {
+        // Compile current lang
+        let current = if let Some(l) = self.inner.get(new_lang) {
+            Translator::load(new_lang.clone(), l)
         }
         else {
-            self.inner.get_mut(def).map(|t|t.get(def)).expect("Report this")
-        }
+            Translator::load(DEF_LANG, self.inner.get(&DEF_LANG).expect("Report this"))
+        };
+
+        self.current = current;
     }
+
+    pub fn get(&mut self) -> &Translator {
+        &self.current
+    }
+
 }

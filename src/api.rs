@@ -94,6 +94,7 @@ mod api_impl {
     pub fn set_lang(data: web::Data<AppState>, params: &SetLangParams) -> Result<(), os::locale::Error> {
         let lang = params.lang.parse()?;
         os::locale::set(&lang)?;
+        data.translations.lock().unwrap().set(&lang);
         *data.lang.lock().unwrap() = lang;
 
         Ok(())

@@ -14,7 +14,7 @@ pub async fn web_interface_fn( data: web::Data<api::AppState>) -> impl Responder
     
     let mut t = data.translations.lock().unwrap();
     let lang = data.lang.lock().unwrap();
-    let translator = t.get_or_def(&lang, &translations::DEF_LANG);
+    let translator = t.get();
 
     HttpResponse::Ok()
     .content_type(ContentType::html())
