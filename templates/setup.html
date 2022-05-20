@@ -70,7 +70,7 @@
                         ⬅ {{ previous_btn }}
                     </button>
                     <button class="green" aria-label="next" type="button" id="nextBtn" onclick="nextPrev(1)">    
-                        {{ finish_btn }}
+                        {{ finish_btn }} ✔
                     </button>
                 </div>
             </div>
@@ -133,7 +133,7 @@
 
                     var next_btn = document.getElementById("nextBtn");
                     if (n == (x.length - 1 )) {
-                        next_btn.innerHTML = "{{ finish_btn }}";
+                        next_btn.innerHTML = "{{ finish_btn }} ✔";
                         next_btn.className = "green";
                     }
                     else {
