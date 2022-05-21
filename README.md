@@ -12,6 +12,12 @@ the public or if we make something for a family member or a friend.
 One of the easiest ways to take care of this is to use Raspberry Pi's embedded hotspot when it can't connect
 to a Wi-Fi (or Ethernet for some models) and configure the connection throught there.
 
+## Features
+
+* Detect automatically when the device is not connected
+* Show hotspot for wi-fi configuration
+* Dark mode
+
 ## Usage
 
 1. `sh setup.sh` once for installing everything and seting up (Note: you will need [Rust](https://www.rust-lang.org/tools/install))
