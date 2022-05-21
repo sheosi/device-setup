@@ -146,7 +146,7 @@
                 xhr.setRequestHeader('Content-Type', 'application/text');
                 xhr.onload = function () {
                     location.reload(true);
-                }
+                };
                 xhr.send();
             }
 
@@ -154,7 +154,7 @@
             
             function showTab(n) {
                 var x = document.getElementsByClassName("step");
-                if (n < x.length ) {
+                if (n < x.length) {
                     x[n].style.display = "block";
                     if (n == 0) {
                         document.getElementById("prevBtn").disabled = true;
