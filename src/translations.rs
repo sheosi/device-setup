@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use crate::vars::*;
 
@@ -24,6 +24,16 @@ impl Translator {
         Self {inner: bundle}
     }
 
+    pub fn load_or_def(lang: LanguageIdentifier, def: &LanguageIdentifier) -> Self {
+        let path = path_for(&lang);
+        if Path::new(&path).exists() {
+            Self::load(lang, &path)
+        }
+        else {
+            Self::load(def.clone(), &path_for(def))
+        }
+    }
+
     pub fn translate(&self, resource: &str, args: Option<&FluentArgs>) -> String {
         let val = self.inner
             .get_message(resource).expect("Resource does not exist")
@@ -34,51 +44,6 @@ impl Translator {
     }
 }
 
-
-pub struct Translations {
-    inner: HashMap<LanguageIdentifier, String>,
-    current: Translator
-}
-
-impl Translations {
-    pub fn new(current: &LanguageIdentifier) -> Self {
-        let mut result:HashMap<_, String> = HashMap::new();
-
-        // Insert langs
-        for l in LANGS {
-            let path = format!("i18n/{}.ftl", l);
-            result.insert(l.parse().expect("Used an invalid identifier"), path.to_string());
-        }
-
-        // Compile current lang
-        let current = if let Some(l) = result.get(current) {
-            Translator::load(current.clone(), l)
-        }
-        else {
-            Translator::load(DEF_LANG, result.get(&DEF_LANG).expect("Report this"))
-        };
-    
-        Self {inner: result, current}
-    }
-
-    pub fn set(&mut self, new_lang: &LanguageIdentifier) {
-        // Compile current lang
-        let current = if let Some(l) = self.inner.get(new_lang) {
-            Translator::load(new_lang.clone(), l)
-        }
-        else {
-            Translator::load(DEF_LANG, self.inner.get(&DEF_LANG).expect("Report this"))
-        };
-
-        self.current = current;
-    }
-
-    pub fn get(&mut self) -> &Translator {
-        &self.current
-    }
-
-}
-
 fn make_lang_name_dict() -> HashMap<&'static str, &'static str> {
     let mut result = HashMap::new();
     for (name,lang) in LANG_NAMES {
@@ -86,4 +51,8 @@ fn make_lang_name_dict() -> HashMap<&'static str, &'static str> {
     }
 
     result
+}
+
+fn path_for(lang: &LanguageIdentifier) -> String {
+    format!("i18n/{}.ftl", lang)
 }

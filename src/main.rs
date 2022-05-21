@@ -8,23 +8,20 @@ use crate::web_interface::render;
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, http::header::ContentType};
 
-const SELF_IP: &str = "192.168.4.1";
-
 #[get("/")]
-pub async fn web_interface_fn( data: web::Data<api::AppState>) -> impl Responder {
+pub async fn web_interface_fn(data: web::Data<api::AppState>) -> impl Responder {
     
-    let mut t = data.translations.lock().unwrap();
+    let translator = data.current.lock().unwrap();
     let lang = data.lang.lock().unwrap();
-    let translator = t.get();
 
     HttpResponse::Ok()
     .content_type(ContentType::html())
-    .body(render::setup_form(translator, &lang))
+    .body(render::setup_form(&*translator, &lang))
 }
 
 pub async fn captive_portal() -> impl Responder {
     HttpResponse::Found()
-    .append_header(("Location", format!("http://{}", SELF_IP)))
+    .append_header(("Location", "/"))
     .finish()
 }
 

@@ -1,7 +1,8 @@
 use std::sync::Mutex;
 
 use crate::os::{self, wifi};
-use crate::translations::{Translations, DEF_LANG};
+use crate::translations::Translator;
+use crate::vars::DEF_LANG;
 
 use actix_web::{post, web, Scope, Responder, ResponseError, HttpResponse, body};
 use serde::Deserialize;
@@ -11,7 +12,7 @@ use unic_langid::LanguageIdentifier;
 pub struct AppState {
     pub wifi: Mutex<Box<dyn wifi::Handler>>,
     pub lang: Mutex<LanguageIdentifier>,
-    pub translations: Mutex<Translations>
+    pub current: Mutex<Translator>
 }
 
 #[allow(clippy::new_without_default)]
@@ -20,7 +21,7 @@ impl AppState {
         let curr_lang = os::locale::current().unwrap_or(DEF_LANG);
         Self {
             wifi: Mutex::new(wifi::get_handler()),
-            translations: Mutex::new(Translations::new(&curr_lang)),
+            current: Mutex::new(Translator::load_or_def(curr_lang.clone(), &DEF_LANG)),
             lang: Mutex::new(curr_lang)
         }
     }
@@ -81,7 +82,7 @@ async fn do_setup(data: web::Data<AppState>, params: web::Form<DoSetupParams>) -
 
 mod api_impl {
     use super::AppState;
-    use crate::os::{self, wifi};
+    use crate::{os::{self, wifi}, translations::Translator, vars::DEF_LANG};
 
     use serde::Deserialize;
     use actix_web::web;
@@ -94,7 +95,7 @@ mod api_impl {
     pub fn set_lang(data: web::Data<AppState>, params: &SetLangParams) -> Result<(), os::locale::Error> {
         let lang = params.lang.parse()?;
         os::locale::set(&lang)?;
-        data.translations.lock().unwrap().set(&lang);
+        *data.current.lock().unwrap() = Translator::load_or_def(lang.clone(), &DEF_LANG);
         *data.lang.lock().unwrap() = lang;
 
         Ok(())
