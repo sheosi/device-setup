@@ -1,22 +1,13 @@
 use std::collections::HashMap;
 
+use crate::vars::*;
+
 use fluent::{FluentArgs, FluentBundle, FluentResource};
-use unic_langid::{langid, LanguageIdentifier};
-use serde::Serialize;
+use lazy_static::lazy_static;
+use unic_langid::LanguageIdentifier;
 
-pub const DEF_LANG: LanguageIdentifier = langid!("en-US");
-
-pub const LANGS: [LangData; 2] = [
-    LangData{value: "es-ES", name: "Español (España)", path: "i18n/es-ES.ftl"}, 
-    LangData{value: "en-US", name: "English (United States)", path: "i18n/en-US.ftl"}
-];
-
-#[derive(Clone, Serialize)]
-pub struct LangData {
-    pub value: &'static str,
-    pub name: &'static str,
-    #[serde(skip_serializing)]
-    pub path: &'static str
+lazy_static! {
+    pub static ref LANG_NAMES_DICT: HashMap<&'static str, &'static str> = make_lang_name_dict();
 }
 
 pub struct Translator {
@@ -55,7 +46,8 @@ impl Translations {
 
         // Insert langs
         for l in LANGS {
-            result.insert(l.value.parse().expect("Used an invalid identifier"), l.path.to_string());
+            let path = format!("i18n/{}.ftl", l);
+            result.insert(l.parse().expect("Used an invalid identifier"), path.to_string());
         }
 
         // Compile current lang
@@ -85,4 +77,13 @@ impl Translations {
         &self.current
     }
 
+}
+
+fn make_lang_name_dict() -> HashMap<&'static str, &'static str> {
+    let mut result = HashMap::new();
+    for (name,lang) in LANG_NAMES {
+        result.insert(name, lang);
+    }
+
+    result
 }

@@ -1,6 +1,7 @@
 mod api;
 mod os;
 mod translations;
+mod vars;
 mod web_interface;
 
 use crate::web_interface::render;
@@ -26,6 +27,8 @@ pub async fn captive_portal() -> impl Responder {
     .append_header(("Location", format!("http://{}", SELF_IP)))
     .finish()
 }
+
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

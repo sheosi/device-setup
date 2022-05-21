@@ -452,6 +452,7 @@ dependencies = [
  "dbus-tokio",
  "fluent",
  "futures",
+ "lazy_static",
  "networkmanager",
  "serde",
  "thiserror",

@@ -18,6 +18,7 @@ thiserror = "^1.0"
 unic-langid = {version = "^0.9", features = ["macros"]}
 uuid = {version = "^1.0", features = ["v4"]}
 askama = "^0.11"
+lazy_static = "1.4"
 
 [[bin]]
 name = "device-setup"

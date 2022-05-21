@@ -1,17 +1,9 @@
-use crate::translations::{LangData, LANGS};
-use serde::Serialize;
-
-#[derive(Serialize)]
-pub struct AllLangs {
-    all: Vec<LangData>,
-    current: String
-}
-
 pub mod render {
+    use crate::{translations::{Translator, LANG_NAMES_DICT}, vars::LANGS};
+
     use askama::Template;
     use unic_langid::LanguageIdentifier;
-
-    use crate::{translations::Translator, web_interface::AllLangs};
+    use serde::Serialize;
 
     pub fn setup_form(trans: &Translator, curr_lang: &LanguageIdentifier) -> String {
 
@@ -24,7 +16,7 @@ pub mod render {
             previous_btn: String,
             next_btn: String,
             finish_btn: String,
-            langs: super::AllLangs
+            langs: AllLangs
         }
 
         SetupForm {
@@ -34,7 +26,27 @@ pub mod render {
             previous_btn: trans.translate("previous_btn", None),
             next_btn: trans.translate("next_btn", None),
             finish_btn: trans.translate("finish_btn", None),
-            langs: AllLangs { all: super::LANGS.to_vec(), current:  curr_lang.to_string()}
+            langs: AllLangs { all: LangData::get_all(), current:  curr_lang.to_string()}
         }.render().expect("Formatting failed, report this")
     }
+
+    #[derive(Serialize)]
+    pub struct AllLangs {
+        all: Vec<LangData>,
+        current: String
+    }
+
+    #[derive(Clone, Serialize)]
+    pub struct LangData {
+        pub value: &'static str,
+        pub name: &'static str,
+    }
+
+    impl LangData {
+        fn get_all() -> Vec<LangData> {
+            LANGS.iter().map(|l|LangData{value: l, name: LANG_NAMES_DICT[l]}).collect()
+        }
+    }
+
+
 }
