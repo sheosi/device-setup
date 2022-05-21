@@ -8,7 +8,7 @@ pub mod render {
     pub fn setup_form(trans: &Translator, curr_lang: &LanguageIdentifier) -> String {
 
         #[derive(Template)]
-        #[template(path = "setup.html")]
+        #[template(path = "setup.min.html")]
         struct SetupForm {
             select_lang_title: String,
             network_name: String,
