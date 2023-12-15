@@ -1,13 +1,13 @@
 pub mod render {
     use crate::{translations::{Translator, LANG_NAMES_DICT}, vars::LANGS};
 
-    use askama::Template;
+    use sailfish::TemplateOnce;
     use unic_langid::LanguageIdentifier;
     use serde::Serialize;
 
     pub fn setup_form(trans: &Translator, curr_lang: &LanguageIdentifier) -> String {
 
-        #[derive(Template)]
+        #[derive(TemplateOnce)]
         #[template(path = "setup.min.html")]
         struct SetupForm {
             select_lang_title: String,
@@ -27,7 +27,7 @@ pub mod render {
             next_btn: trans.translate("next_btn", None),
             finish_btn: trans.translate("finish_btn", None),
             langs: AllLangs { all: LangData::get_all(), current:  curr_lang.to_string()}
-        }.render().expect("Formatting failed, report this")
+        }.render_once().expect("Formatting failed, report this")
     }
 
     #[derive(Serialize)]

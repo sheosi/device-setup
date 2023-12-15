@@ -75,19 +75,19 @@
     <body style= "--bg:var(--body-bg)">
         <form style="--bg:var(--form-bg);--radius:20px /20px;--shadow-soft:3;--px:20px;--py:60px;--my:60px;max-width:50em;margin-left:auto;margin-right:auto" class="form"  id="setupForm" action="/api/do-setup" method="post">
             <div class="step">
-                <h1> {{ select_lang_title }} </h1>
+                <h1> <%= select_lang_title %> </h1>
                 <select id="lang_select" name="lang">
-                    {% for lang in langs.all %}
-                        <option value="{{ lang.value }}" {% if lang.value == langs.current %} selected {% endif %}>{{ lang.name }}</option>
-                    {% endfor %}
+                    <% for lang in langs.all {%>
+                        <option value="<%= lang.value %>" <% if lang.value == langs.current { %> selected <% } %>><%= lang.name %></option>
+                    <% } %>
                 </select> 
             </div class="step">
 
             <div class="step">
                 <h1>Wi-fi</h1>
-                <label>{{ network_name }}</label>
+                <label><%= network_name %></label>
                 <input placeholder="MyWifi" name="ssid" id="ssid" type="text" required/>
-                <label>{{ password }}</label>
+                <label><%= password %></label>
                 <input placeholder="12345678"name="password" id="password" type="text" required/>
                 <br/>
             </div>
@@ -99,10 +99,10 @@
             <div id="buttons" style="overflow:auto;max-width:97.4%;">
                 <div class="group" style="float:right;--mt:15px; --mr:0;">
                     <button class="white js-element" aria-label="previous" type="button" id="prevBtn" onclick="nextPrev(-1)"> 
-                        ⬅ {{ previous_btn }}
+                        ⬅ <%= previous_btn %>
                     </button>
                     <button class="green" aria-label="next" type="button" id="nextBtn" onclick="nextPrev(1)">    
-                        {{ finish_btn }} ✔
+                        <%= finish_btn %> ✔
                     </button>
                 </div>
             </div>
@@ -165,12 +165,12 @@
 
                     var next_btn = document.getElementById("nextBtn");
                     if (n == (x.length - 1 )) {
-                        next_btn.innerHTML = "{{ finish_btn }} ✔";
+                        next_btn.innerHTML = "<%= finish_btn %> ✔";
                         next_btn.className = "green";
                     }
                     else {
                         next_btn.className = "";
-                        next_btn.innerHTML = "{{ next_btn }} ⮕";
+                        next_btn.innerHTML = "<%= next_btn %> ⮕";
                     }
 
                     fixStepIndicator(n)
