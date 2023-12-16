@@ -28,8 +28,8 @@ fn get_file_ext() -> &'static str {
     }
 }
 
-fn call_sys(cmd: &str) {
-    let cmd_out = String::from_utf8(std::process::Command::new(cmd).output().unwrap().stdout).unwrap();
+fn call_sys(cmd: &str, args:&[&str]) {
+    let cmd_out = String::from_utf8(std::process::Command::new(cmd).args(args).output().unwrap().stdout).unwrap();
     println!("{cmd_out}");
 }
 
@@ -46,8 +46,8 @@ fn main() {
         std::fs::create_dir("build-deps").unwrap();
         let h_os = get_os();
         let h_arch = get_arch();
-        call_sys(&format!("curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-{h_os}-{h_arch}{file_ext} -o build-deps/tailwindcss{file_ext}"));
-        call_sys("chmod +x build-deps/tailwindcss{file_ext}")
+        call_sys("curl" ,&["-sL",&format!("https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-{h_os}-{h_arch}{file_ext} -o build-deps/tailwindcss{file_ext}")]);
+        call_sys("chmod", &["+x", &format!("build-deps/tailwindcss{file_ext}")])
     }
 
     for html_file in HTML_FILES {
@@ -55,5 +55,5 @@ fn main() {
         write("templates/setup.min.html", html_minifier.get_html()).unwrap();
     }
 
-    call_sys("build-deps/tailwindcss -c tailwind.config.js")
+    call_sys("./build-deps/tailwindcss", &["-c", "tailwind.config.js"])
 }

@@ -4,7 +4,8 @@ use std::time::Duration;
 use dbus::Message;
 use dbus::blocking::{stdintf::org_freedesktop_dbus::PropertiesPropertiesChanged, Connection};
 
-fn start_device_setup_systemd() {
+#[cfg(feature="systemd")]
+fn start_device_setup() {
     match Command::new("/usr/bin/systemctl").arg("start").arg("device-setup.service").output() {
         Ok(output) => {
             if !output.status.success() {
@@ -18,7 +19,8 @@ fn start_device_setup_systemd() {
     }
 }
 
-fn watch_network_nm() {
+#[cfg(feature="networkmanager")]
+fn watch_network() {
     let dbus_connection = Connection::new_system().unwrap();
     let p = dbus_connection.with_proxy("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager", Duration::from_secs(5));
     let _id = p.match_signal(|c: PropertiesPropertiesChanged, _: &Connection, _: &Message|{
@@ -27,7 +29,7 @@ fn watch_network_nm() {
             // Access the connections as iter and try to get the first one
             // this way we know whether there's one
             if cons.0.as_iter().unwrap().next().is_none() {
-                start_device_setup_systemd();
+                start_device_setup();
             }
         }
 
@@ -42,5 +44,5 @@ fn watch_network_nm() {
 
 
 fn main() {
-    watch_network_nm();
+    watch_network();
 }

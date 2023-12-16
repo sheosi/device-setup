@@ -12,9 +12,8 @@ fluent = "^0.16"
 unic-langid = {version = "^0.9", features = ["macros"]}
 
 # Network
-networkmanager = "^0.3"
-dbus = "^0.9"
-dbus-tokio = "^0.7"
+dbus = {version="^0.9", optional=true}
+dbus-tokio = {version="^0.7", optional=true}
 
 async-trait = "^0.1"
 futures = "^0.3"
@@ -22,6 +21,7 @@ serde = {version = "^1.0", features = ["derive"]}
 thiserror = "^1.0"
 uuid = {version = "^1.0", features = ["v4"]}
 lazy_static = "1.4"
+tokio = {version = "1.35.0", features =["sync"]}
 
 
 [build-dependencies]
@@ -36,5 +36,11 @@ name = "device-setup-detector"
 path = "src/detector/main.rs"
 
 [features]
+
 default = ["systemd", "networkmanager"]
+
+#Init systems, choose one
 systemd = []
+
+#Network systems, choose one
+networkmanager = ["dbus", "dbus-tokio"]

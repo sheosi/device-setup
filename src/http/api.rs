@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use crate::os::{self, wifi};
-use crate::translations::Translator;
+use crate::http::translations::Translator;
 use crate::vars::DEF_LANG;
 
 use actix_web::{post, web, Scope, Responder, ResponseError, HttpResponse, body};
@@ -10,7 +10,7 @@ use thiserror::Error;
 use unic_langid::LanguageIdentifier;
 
 pub struct AppState {
-    pub wifi: Mutex<Box<dyn wifi::Handler>>,
+    pub wifi: tokio::sync::Mutex<Box<dyn wifi::Handler>>,
     pub lang: Mutex<LanguageIdentifier>,
     pub current: Mutex<Translator>
 }
@@ -20,7 +20,7 @@ impl AppState {
     pub fn new() -> Self {
         let curr_lang = os::locale::current().unwrap_or(DEF_LANG);
         Self {
-            wifi: Mutex::new(wifi::get_handler()),
+            wifi: tokio::sync::Mutex::new(wifi::get_handler()),
             current: Mutex::new(Translator::load_or_def(curr_lang.clone(), &DEF_LANG)),
             lang: Mutex::new(curr_lang)
         }
@@ -82,7 +82,7 @@ async fn do_setup(data: web::Data<AppState>, params: web::Form<DoSetupParams>) -
 
 mod api_impl {
     use super::AppState;
-    use crate::{os::{self, wifi}, translations::Translator, vars::DEF_LANG};
+    use crate::{os::{self, wifi}, http::translations::Translator, vars::DEF_LANG};
 
     use serde::Deserialize;
     use actix_web::web;
@@ -108,6 +108,6 @@ mod api_impl {
     }
 
     pub async fn connect_wifi(data: web::Data<AppState>, params: &ConnectParams) -> Result<(), wifi::Error> {
-        data.wifi.lock().unwrap().connect_to(&params.ssid, &params.password).await
+        data.wifi.lock().await.connect_to(&params.ssid, &params.password).await
     }
 }

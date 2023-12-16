@@ -1,5 +1,5 @@
 pub mod render {
-    use crate::{translations::{Translator, LANG_NAMES_DICT}, vars::LANGS};
+    use crate::{http::translations::{Translator, LANG_NAMES_DICT}, vars::LANGS};
 
     use sailfish::TemplateOnce;
     use unic_langid::LanguageIdentifier;
