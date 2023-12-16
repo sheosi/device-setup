@@ -34,3 +34,7 @@ path = "src/main.rs"
 [[bin]]
 name = "device-setup-detector"
 path = "src/detector/main.rs"
+
+[features]
+default = ["systemd", "networkmanager"]
+systemd = []
