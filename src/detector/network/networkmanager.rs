@@ -8,6 +8,31 @@ const NM_DEST: &str = "org.freedesktop.NetworkManager";
 const TIMEOUT: Duration = Duration::from_secs(5);
 
 
+#[cfg(feature="networkmanager")]
+pub fn watch_network() {
+    let dbus_connection = Connection::new_system().unwrap();
+    let nm_proxy = dbus_connection.with_proxy(NM_DEST, "/org/freedesktop/NetworkManager", TIMEOUT);
+
+     check_setup_status(
+        &dbus_connection, 
+        nm_api::Nm::new(&nm_proxy).get_active_connections()
+    );
+
+    let _id = nm_proxy.match_signal(|c: PropertiesPropertiesChanged, _: &Connection, _: &Message|{
+        if let Some(cons) = c.changed_properties.get("ActiveConnections") {
+            let dbus_connection = Connection::new_system().unwrap();
+            check_setup_status(&dbus_connection, cons);
+        }
+
+        // We want to keep the match
+        true
+    }).unwrap();    
+
+    loop {
+        dbus_connection.process(Duration::from_secs(std::u16::MAX.into())).unwrap();
+    }
+}
+
 mod nm_api {
     use dbus::arg::{PropMap, Variant, RefArg};
     use dbus::blocking::{Connection, stdintf::org_freedesktop_dbus::Properties, Proxy};
@@ -92,30 +117,5 @@ fn check_setup_status(dbus: &Connection, connections: &Variant<Box<dyn RefArg>>)
     }
     else {
         crate::execution::stop_device_stop()
-    }
-}
-
-#[cfg(feature="networkmanager")]
-pub fn watch_network() {
-    let dbus_connection = Connection::new_system().unwrap();
-    let nm_proxy = dbus_connection.with_proxy(NM_DEST, "/org/freedesktop/NetworkManager", TIMEOUT);
-
-     check_setup_status(
-        &dbus_connection, 
-        nm_api::Nm::new(&nm_proxy).get_active_connections()
-    );
-
-    let _id = nm_proxy.match_signal(|c: PropertiesPropertiesChanged, _: &Connection, _: &Message|{
-        if let Some(cons) = c.changed_properties.get("ActiveConnections") {
-            let dbus_connection = Connection::new_system().unwrap();
-            check_setup_status(&dbus_connection, cons);
-        }
-
-        // We want to keep the match
-        true
-    }).unwrap();    
-
-    loop {
-        dbus_connection.process(Duration::from_secs(std::u16::MAX.into())).unwrap();
     }
 }

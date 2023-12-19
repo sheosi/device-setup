@@ -3,6 +3,8 @@ pub mod translations;
 mod web_interface;
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, http::header::ContentType};
+use local_ip_address::local_ip;
+use tracing::{event, Level};
 
 
 #[get("/")]
@@ -22,8 +24,17 @@ async fn captive_portal() -> impl Responder {
     .finish()
 }
 
-
 pub async fn device_setup_server() -> Result<(), std::io::Error>{
+    const PORT: u16 = 8080;
+
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+
+    let ip_addr = local_ip().unwrap();
+    assert!(!ip_addr.is_loopback());
+    let ip_addr_str = ip_addr.to_string();
+    event!(Level::INFO, "Running on {ip_addr_str}");
+
     HttpServer::new(|| {
     App::new()
         .app_data(web::Data::new(api::AppState::new()))
@@ -31,8 +42,7 @@ pub async fn device_setup_server() -> Result<(), std::io::Error>{
         .service(api::scope())
         .default_service(web::to(captive_portal))
     })
-    .bind(("0.0.0.0", 8080))?
-    //.bind(("0.0.0.0", 80))?
+    .bind((ip_addr_str, PORT))?
     .workers(1) // We only expect one client to be present
     .run()
     .await
